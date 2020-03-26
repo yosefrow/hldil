@@ -3,7 +3,12 @@
 """ 
 Lookup expiration dates for unlabeled foods
 
+Relies on set regex pattern to find table in html pages
+
 Powered by 
+===========
+"www.eatbydate.com"
+"google.com" 
 """
 import requests
 import re
