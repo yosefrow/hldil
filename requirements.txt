@@ -1,2 +1,7 @@
 requests
-re
+
+beautifulsoup4
+google
+
+lxml
+pandas

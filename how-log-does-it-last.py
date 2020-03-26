@@ -8,8 +8,8 @@ import sys
 
 import pandas
 
-def main(food):  
-    print(f"Looking up: {food}")
+def main(produce):  
+    print(f"Looking up: {produce}")
     
     try: 
         from googlesearch import search 
@@ -18,7 +18,7 @@ def main(food):
       
     # to search 
     site = "www.eatbydate.com"
-    query = f"site:{site} how long do {food} last"
+    query = f"site:{site} how long do {produce} last"
       
     result = None
     url = None
@@ -27,7 +27,7 @@ def main(food):
         url = result
 
     if url == None:
-        print(f"error! no result found for: {food}")
+        print(f"error! no result found for: {produce}")
         exit(1)
     
     response = requests.get(url)
@@ -55,6 +55,6 @@ def main(food):
     print(table)
 
 if __name__ == '__main__':
-    food = sys.argv[1]
-    main(food)
+    produce = sys.argv[1]
+    main(produce)
     
