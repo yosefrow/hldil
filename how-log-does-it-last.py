@@ -10,16 +10,12 @@ Powered by
 "www.eatbydate.com"
 "google.com" 
 """
-import requests
 import re
 import sys
 
+import requests
 import pandas
-
-try: 
-    from googlesearch import search 
-except ImportError:  
-    print("No module named 'google' found") 
+from googlesearch import search 
 
 SOURCE_SITE = "www.eatbydate.com"
 TABLE_REGEX_PATTERN = '<table id="unopened">(.|\n)*?</table>'
@@ -40,6 +36,7 @@ def get_page_html(url):
     response = requests.get(url)
     html = response.text
     
+    # sometimes a web page can respond with 200 but actually be a 404 page in content
     if not (response.status_code == 200 and re.search('Error 404', html) == None):
         html = None
     
