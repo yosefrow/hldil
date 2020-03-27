@@ -17,6 +17,8 @@ import requests
 import pandas
 from googlesearch import search 
 
+from urllib.error import HTTPError
+
 SOURCE_SITE = "www.eatbydate.com"
 TABLE_REGEX_PATTERN = '<table id="unopened">(.|\n)*?</table>'
 #P_REGEX_PATTERN = '^<h3>.*What is the best way to store.*</h3>$[\n|.]*?<h3>'
@@ -29,9 +31,24 @@ def get_page_url(food, site):
     result = None
     url = None
 
-    for result in search(query, tld="com", num=1, stop=1, pause=2): 
-        url = result
-
+    try:
+        for result in search(query, tld="com", num=1, stop=1, pause=2): 
+            url = result
+    except HTTPError as err:
+        print(
+            f'error! Google Search encountered an error\n' +
+            f'Code: {err.code} - {err.reason}\n' +
+            f'Visit the url manually: {err.url}\n' 
+        )
+        
+        if err.code == 429:
+            print (
+                'You are probably being rate-limited by Google.\n' +
+                'Try waiting before using the program again and reduce the rate at which you make requests.'
+            )
+            exit(1)
+        else:
+            raise
     return url
 
 def get_page_html(url):
@@ -51,7 +68,6 @@ def get_first_match(source, pattern):
         result = matches[0]
     except TypeError:
         result = None
-    pass
 
     return result
 
@@ -112,6 +128,5 @@ if __name__ == '__main__':
     except:
         print(f"error! You must provide a food to lookup as an argument. e.g: {script_path} my-favorite-food")
         exit(1)
-    pass
 
     main(food)
