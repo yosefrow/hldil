@@ -19,10 +19,12 @@ from googlesearch import search
 
 SOURCE_SITE = "www.eatbydate.com"
 TABLE_REGEX_PATTERN = '<table id="unopened">(.|\n)*?</table>'
+#P_REGEX_PATTERN = '^<h3>.*What is the best way to store.*</h3>$[\n|.]*?<h3>'
+P_REGEX_PATTERN = '<h3>.*What is the best way to store.*(\n|.)*?<h3>'
 
 def get_page_url(food, site):     
     # to search 
-    query = f"site:{site} how long do {food} last"
+    query = f"site:{site} {food} \"storage\""
       
     result = None
     url = None
@@ -42,42 +44,74 @@ def get_page_html(url):
     
     return html
 
-def extract_html_table(html, regex_pattern):
-    table_html_matches = re.search(regex_pattern, html)
+def get_first_match(source, pattern):
+    matches = re.search(pattern, source)
 
     try:
-        table_html = table_html_matches[0]
+        result = matches[0]
     except TypeError:
-        table_html = None
+        result = None
     pass
 
-    return table_html
+    return result
 
 def pretty_print_table_html(table_html):
     table = pandas.read_html(table_html)
     print(table[0])
+
+def strip_html_tags(html_string):
+    pattern = '<[^><]*?>'
+    
+    text_string = re.sub(pattern, '', html_string)
+    return text_string
+
+def html_string_to_text(html_string):
+    import html
+    html_string = html.unescape(html_string)
+    text_string = strip_html_tags(html_string)
+
+    return text_string
 
 def main(food):  
     print(f"Looking up: '{food}' ...")
 
     url = get_page_url(food, SOURCE_SITE)
     if url == None:
-        print(f"error! no result found for '{food}'")
+        print(f"\nerror! no result found for '{food}'\n")
         exit(1)
     print(f"url: {url}")
     
     html = get_page_html(url)
     if html == None:
-        print(f"error! page lookup failed for '{food}'")
+        print(f"\nerror! page lookup failed for '{food}'\n")
         exit(1)
         
-    table_html = extract_html_table(html, TABLE_REGEX_PATTERN)
+    table_html = get_first_match(html, TABLE_REGEX_PATTERN)
     if table_html == None:
-        print(f"error! table not found for '{food}'")
-        exit(1)
-
-    pretty_print_table_html(table_html)
-
+        print(f"\nwarning! table not found for '{food}'\n")
+        p_html = get_first_match(html, P_REGEX_PATTERN)
+        
+        if p_html == None:
+            print(f"\nerror! expiry info not found for '{food}'\n")
+            exit(1)
+        else:
+            p_text = html_string_to_text(p_html)
+            print(p_text)
+    else:
+        pretty_print_table_html(table_html)
+    
 if __name__ == '__main__':
-    food = sys.argv[1]
+    script_path = sys.argv[0]
+    
+    try:
+        args = sys.argv[1:]
+        seperator = ' '
+        food = seperator.join(args)
+        
+        print(food)
+    except:
+        print(f"error! You must provide a food to lookup as an argument. e.g: {script_path} my-favorite-food")
+        exit(1)
+    pass
+
     main(food)
