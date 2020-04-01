@@ -21,8 +21,33 @@ from urllib.error import HTTPError
 
 SOURCE_SITE = "www.eatbydate.com"
 TABLE_REGEX_PATTERN = '<table id="unopened">(.|\n)*?</table>'
-#P_REGEX_PATTERN = '^<h3>.*What is the best way to store.*</h3>$[\n|.]*?<h3>'
 P_REGEX_PATTERN = '<h3>.*What is the best way to store.*(\n|.)*?<h3>'
+
+color_codes = {
+    'HEADER': '\033[95m',
+    'BOKBLUE': '\033[94m',
+    'OKGREEN': '\033[92m',
+    'WARNING': '\033[93m',
+    'FAIL': '\033[91m',
+    'ENDC': '\033[0m',
+    'BOLD': '\033[1m',
+    'UNDERLINE': '\033[4m'
+}
+
+def color_print(color_name, message):
+    color = color_codes[color_name]
+    end_color = color_codes['ENDC']
+    print(f'{color}{message}{end_color}')
+
+def abort(message):
+    color_print('FAIL', f'\nCritical error: {message}\n')
+    exit(1)
+    
+def warn(message):
+    color_print('WARNING', f'\nWarning: {message}\n')
+
+def success(message):
+    color_print('OKGREEN', message)
 
 def get_page_url(food, site):     
     # to search 
@@ -36,17 +61,16 @@ def get_page_url(food, site):
             url = result
     except HTTPError as err:
         print(
-            f'error! Google Search encountered an error\n' +
+            f'Google Search encountered an error\n' +
             f'Code: {err.code} - {err.reason}\n' +
-            f'Visit the url manually: {err.url}\n' 
+            f'You can visit the url manually: {err.url}\n' 
         )
         
         if err.code == 429:
-            print (
+            print(
                 'You are probably being rate-limited by Google.\n' +
                 'Try waiting before using the program again and reduce the rate at which you make requests.'
             )
-            exit(1)
         else:
             raise
     return url
@@ -93,23 +117,21 @@ def main(food):
 
     url = get_page_url(food, SOURCE_SITE)
     if url == None:
-        print(f"\nerror! no result found for '{food}'\n")
-        exit(1)
-    print(f"url: {url}")
+        abort(f"no page url found for '{food}'\n")
+    
+    success(f"Found url: {url}")
     
     html = get_page_html(url)
     if html == None:
-        print(f"\nerror! page lookup failed for '{food}'\n")
-        exit(1)
+        abort(f"no page html found for '{food}'\n")
         
     table_html = get_first_match(html, TABLE_REGEX_PATTERN)
     if table_html == None:
-        print(f"\nwarning! table not found for '{food}'\n")
+        warn(f"no table found for '{food}'\n")
         p_html = get_first_match(html, P_REGEX_PATTERN)
         
         if p_html == None:
-            print(f"\nerror! expiry info not found for '{food}'\n")
-            exit(1)
+            abort(f"no expiration info found for '{food}'")
         else:
             p_text = html_string_to_text(p_html)
             print(p_text)
@@ -123,10 +145,7 @@ if __name__ == '__main__':
         args = sys.argv[1:]
         seperator = ' '
         food = seperator.join(args)
-        
-        print(food)
     except:
-        print(f"error! You must provide a food to lookup as an argument. e.g: {script_path} my-favorite-food")
-        exit(1)
+        abort(f"Missing argument: 'food'. e.g: {script_path} food")
 
     main(food)
